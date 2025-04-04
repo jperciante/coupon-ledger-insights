@@ -193,12 +193,12 @@ const CreditCardCoupons: React.FC = () => {
               
               <div className="space-y-2">
                 <Label>Card Brand</Label>
-                <Select value={selectedCardBrand || ''} onValueChange={value => setSelectedCardBrand(value || null)}>
+                <Select value={selectedCardBrand || undefined} onValueChange={value => setSelectedCardBrand(value || null)}>
                   <SelectTrigger>
                     <SelectValue placeholder="All Card Brands" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Card Brands</SelectItem>
+                    <SelectItem value="all-brands">All Card Brands</SelectItem>
                     <SelectItem value="OCA">OCA</SelectItem>
                     <SelectItem value="Visa">Visa</SelectItem>
                     <SelectItem value="MasterCard">MasterCard</SelectItem>
@@ -210,11 +210,11 @@ const CreditCardCoupons: React.FC = () => {
                 <Label>Credit Type</Label>
                 <RadioGroup 
                   className="flex space-x-4"
-                  value={selectedCreditType || ''}
-                  onValueChange={value => setSelectedCreditType(value || null)}
+                  value={selectedCreditType || "all-types"}
+                  onValueChange={value => setSelectedCreditType(value === "all-types" ? null : value)}
                 >
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="" id="all" />
+                    <RadioGroupItem value="all-types" id="all" />
                     <Label htmlFor="all">All</Label>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -230,12 +230,12 @@ const CreditCardCoupons: React.FC = () => {
               
               <div className="space-y-2">
                 <Label>Liquidation ID</Label>
-                <Select value={selectedLiquidationId || ''} onValueChange={value => setSelectedLiquidationId(value || null)}>
+                <Select value={selectedLiquidationId || undefined} onValueChange={value => setSelectedLiquidationId(value || null)}>
                   <SelectTrigger>
                     <SelectValue placeholder="All Liquidations" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Liquidations</SelectItem>
+                    <SelectItem value="all-liquidations">All Liquidations</SelectItem>
                     {liquidationIds.map(id => (
                       <SelectItem key={id} value={id}>{id}</SelectItem>
                     ))}
