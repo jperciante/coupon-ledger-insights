@@ -7,6 +7,8 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
+import CreditCardCoupons from "./pages/CreditCardCoupons";
+import SalesCoupons from "./pages/SalesCoupons";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 
@@ -26,6 +28,22 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/credit-card-coupons"
+              element={
+                <ProtectedRoute>
+                  <CreditCardCoupons />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/sales-coupons"
+              element={
+                <ProtectedRoute>
+                  <SalesCoupons />
                 </ProtectedRoute>
               }
             />
