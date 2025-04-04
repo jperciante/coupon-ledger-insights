@@ -15,6 +15,8 @@ export interface CreditCardCoupon {
   couponId: string;
   amount: number;
   quotas: number;
+  taxes: number;
+  commissions: number;
   authorizationId: string;
   creditType: 'Credit' | 'Debit';
   cardBrand: 'OCA' | 'Visa' | 'MasterCard';
@@ -22,6 +24,7 @@ export interface CreditCardCoupon {
   expectedPaymentDate: string;
   sellerId: string;
   sellerName: string;
+  liquidationId: string;
 }
 
 export interface SalesCoupon {
@@ -34,4 +37,12 @@ export interface SalesCoupon {
   terminal: string;
   operatorId: string;
   operatorName: string;
+}
+
+export interface LiquidationSummary {
+  liquidationId: string;
+  totalAmount: number;
+  couponCount: number;
+  paymentDay: string;
+  cardBrand: 'OCA' | 'Visa' | 'MasterCard';
 }
