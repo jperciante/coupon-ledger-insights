@@ -7,14 +7,19 @@ import { DateRange } from 'react-day-picker';
 import { addDays, format, subDays } from 'date-fns';
 import CreditCardCouponsTable from '@/components/CreditCard/CreditCardCouponsTable';
 import PaymentCalendarTable from '@/components/CreditCard/PaymentCalendarTable';
+import { CreditCardCoupon } from '@/types/transactions';
 
 // Mock data function - in a real app, this would fetch from an API
-const fetchCreditCardCoupons = async ({ dateRange }: { dateRange: DateRange | undefined }) => {
+const fetchCreditCardCoupons = async ({ dateRange }: { dateRange: DateRange | undefined }): Promise<CreditCardCoupon[]> => {
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 500));
   
   const startDate = dateRange?.from ? new Date(dateRange.from) : subDays(new Date(), 30);
   const endDate = dateRange?.to ? new Date(dateRange.to) : new Date();
+  
+  // Card brands for random assignment
+  const cardBrands = ['OCA', 'Visa', 'MasterCard'] as const;
+  const creditTypes = ['Credit', 'Debit'] as const;
   
   // Generate mock data
   return Array.from({ length: 25 }, (_, i) => ({
@@ -23,7 +28,8 @@ const fetchCreditCardCoupons = async ({ dateRange }: { dateRange: DateRange | un
     amount: Math.round(Math.random() * 10000) / 100,
     quotas: Math.floor(Math.random() * 12) + 1,
     authorizationId: `AUTH${200000 + i}`,
-    creditType: ['VISA', 'MASTERCARD', 'AMEX'][Math.floor(Math.random() * 3)],
+    cardBrand: cardBrands[Math.floor(Math.random() * cardBrands.length)],
+    creditType: creditTypes[Math.floor(Math.random() * creditTypes.length)],
     sellDate: format(
       subDays(new Date(), Math.floor(Math.random() * 30)),
       'yyyy-MM-dd'
