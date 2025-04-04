@@ -3,6 +3,7 @@ import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
+import MainNav from '@/components/Navigation/MainNav';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -31,6 +32,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
               <LogOut className="h-5 w-5" />
             </Button>
           </div>
+        </div>
+        <div className="border-b px-6 py-2">
+          <MainNav />
         </div>
       </header>
       <main className="flex-1">

@@ -6,6 +6,7 @@ import { DateRangePicker } from '@/components/Dashboard/DateRangePicker';
 import { DateRange } from 'react-day-picker';
 import { format, subDays } from 'date-fns';
 import SalesCouponsTable from '@/components/Sales/SalesCouponsTable';
+import DashboardLayout from '@/components/Dashboard/DashboardLayout';
 
 // Mock data function - in a real app, this would fetch from an API
 const fetchSalesCoupons = async ({ dateRange }: { dateRange: DateRange | undefined }) => {
@@ -44,21 +45,23 @@ const SalesCoupons: React.FC = () => {
   });
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-        <h1 className="text-3xl font-bold tracking-tight">Sales System Coupons (PosComm)</h1>
-        <DateRangePicker dateRange={dateRange} onDateRangeChange={setDateRange} />
-      </div>
+    <DashboardLayout>
+      <div className="container mx-auto py-6 space-y-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+          <h1 className="text-3xl font-bold tracking-tight">Sales System Coupons (PosComm)</h1>
+          <DateRangePicker dateRange={dateRange} onDateRangeChange={setDateRange} />
+        </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Sales Coupons</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <SalesCouponsTable coupons={coupons || []} isLoading={isLoading} />
-        </CardContent>
-      </Card>
-    </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Sales Coupons</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <SalesCouponsTable coupons={coupons || []} isLoading={isLoading} />
+          </CardContent>
+        </Card>
+      </div>
+    </DashboardLayout>
   );
 };
 

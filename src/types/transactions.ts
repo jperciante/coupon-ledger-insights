@@ -16,7 +16,8 @@ export interface CreditCardCoupon {
   amount: number;
   quotas: number;
   authorizationId: string;
-  creditType: string;
+  creditType: 'Credit' | 'Debit';
+  cardBrand: 'OCA' | 'Visa' | 'MasterCard';
   sellDate: string;
   expectedPaymentDate: string;
   sellerId: string;
