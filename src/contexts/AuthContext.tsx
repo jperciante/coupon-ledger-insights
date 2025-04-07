@@ -2,12 +2,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-
-// This would be replaced with a real API call in a production app
-const mockUsers = [
-  { id: 1, username: 'admin', password: 'password', name: 'Admin User' },
-  { id: 2, username: 'user', password: 'password', name: 'Regular User' },
-];
+import { login as apiLogin, logout as apiLogout, verifyToken } from '@/api/authApi';
 
 interface User {
   id: number;
@@ -26,47 +21,76 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   
   // Check if user is already logged in
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (error) {
-        console.error('Failed to parse stored user data', error);
-        localStorage.removeItem('user');
+    const checkAuth = async () => {
+      const token = localStorage.getItem('authToken');
+      
+      if (token) {
+        try {
+          const { valid, user } = await verifyToken();
+          
+          if (valid && user) {
+            setUser(user);
+          } else {
+            // Token is invalid, remove it
+            localStorage.removeItem('authToken');
+          }
+        } catch (error) {
+          console.error('Failed to verify auth token', error);
+          localStorage.removeItem('authToken');
+        }
       }
-    }
+      
+      setIsLoading(false);
+    };
+    
+    checkAuth();
   }, []);
 
   const login = async (username: string, password: string): Promise<boolean> => {
-    // Simulate API request delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    const foundUser = mockUsers.find(
-      (u) => u.username === username && u.password === password
-    );
-    
-    if (foundUser) {
-      const { password, ...userWithoutPassword } = foundUser;
-      setUser(userWithoutPassword);
-      localStorage.setItem('user', JSON.stringify(userWithoutPassword));
-      toast.success(`Welcome, ${userWithoutPassword.name}!`);
-      return true;
-    } else {
-      toast.error('Invalid username or password');
+    try {
+      setIsLoading(true);
+      const response = await apiLogin({ username, password });
+      
+      if (response.user && response.token) {
+        setUser(response.user);
+        localStorage.setItem('authToken', response.token);
+        toast.success(`Welcome, ${response.user.name}!`);
+        return true;
+      } else {
+        toast.error('Invalid login response');
+        return false;
+      }
+    } catch (error) {
+      toast.error('Login failed. Please check your credentials.');
       return false;
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('user');
-    navigate('/login');
-    toast.info('You have been logged out');
+  const logout = async () => {
+    try {
+      await apiLogout();
+    } catch (error) {
+      console.error('Logout API call failed', error);
+    } finally {
+      setUser(null);
+      localStorage.removeItem('authToken');
+      navigate('/login');
+      toast.info('You have been logged out');
+    }
   };
+
+  if (isLoading) {
+    return <div className="flex justify-center items-center min-h-screen">
+      <p className="text-muted-foreground">Loading authentication...</p>
+    </div>;
+  }
 
   return (
     <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user }}>

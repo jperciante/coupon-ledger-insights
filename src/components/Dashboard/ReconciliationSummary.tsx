@@ -6,15 +6,16 @@ import { TransactionData } from '@/types/transactions';
 
 interface ReconciliationSummaryProps {
   transactions: TransactionData[];
+  summaryData?: any; // The summary data from the API
 }
 
-const ReconciliationSummary: React.FC<ReconciliationSummaryProps> = ({ transactions }) => {
-  // Calculate summary data
+const ReconciliationSummary: React.FC<ReconciliationSummaryProps> = ({ transactions, summaryData }) => {
+  // Use API data if available, otherwise calculate from transactions
   const totalTransactions = transactions.length;
   const totalAmount = transactions.reduce((sum, transaction) => sum + transaction.amount, 0);
   
-  // Prepare data for reconciliation status chart
-  const statusData = [
+  // Use provided summary data or fallback to mock data
+  const statusData = summaryData?.statusData || [
     { name: 'Reconciled', value: 42 },
     { name: 'Pending', value: 13 },
     { name: 'Mismatch', value: 5 }
@@ -23,8 +24,8 @@ const ReconciliationSummary: React.FC<ReconciliationSummaryProps> = ({ transacti
   // Colors for the pie chart
   const COLORS = ['#0088FE', '#FFBB28', '#FF8042'];
   
-  // Prepare data for amount by credit type
-  const creditTypeData = [
+  // Use provided credit type data or fallback to mock data
+  const creditTypeData = summaryData?.creditTypeData || [
     { name: 'Visa', amount: 12500 },
     { name: 'Mastercard', amount: 9700 },
     { name: 'American Express', amount: 4200 },

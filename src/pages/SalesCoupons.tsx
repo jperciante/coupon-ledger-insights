@@ -1,64 +1,18 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DateRangePicker } from '@/components/Dashboard/DateRangePicker';
 import { DateRange } from 'react-day-picker';
-import { format, subDays } from 'date-fns';
+import { format, subDays, formatISO } from 'date-fns';
 import SalesCouponsTable from '@/components/Sales/SalesCouponsTable';
 import DashboardLayout from '@/components/Dashboard/DashboardLayout';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Filter, Search, Terminal, User } from 'lucide-react';
-
-// Mock terminal IDs
-const terminalIds = ['POS-1', 'POS-2', 'POS-3', 'POS-4', 'POS-5'];
-
-// Mock data function - in a real app, this would fetch from an API
-const fetchSalesCoupons = async ({ 
-  dateRange, 
-  terminalId, 
-  operatorId
-}: { 
-  dateRange: DateRange | undefined,
-  terminalId: string | null,
-  operatorId: string | null
-}) => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  const startDate = dateRange?.from ? new Date(dateRange.from) : subDays(new Date(), 30);
-  const endDate = dateRange?.to ? new Date(dateRange.to) : new Date();
-  
-  // Generate mock data
-  let coupons = Array.from({ length: 30 }, (_, i) => ({
-    id: `sc-${i + 1}`,
-    couponId: `CP${100000 + i}`,
-    amount: Math.round(Math.random() * 10000) / 100,
-    productName: `Product ${i % 10 + 1}`,
-    quantity: Math.floor(Math.random() * 5) + 1,
-    saleDate: format(
-      subDays(new Date(), Math.floor(Math.random() * 30)),
-      'yyyy-MM-dd'
-    ),
-    terminal: `POS-${i % 5 + 1}`,
-    operatorId: `OP-${1000 + i % 8}`,
-    operatorName: `Operator ${i % 8 + 1}`,
-  }));
-
-  // Apply filters
-  if (terminalId) {
-    coupons = coupons.filter(coupon => coupon.terminal === terminalId);
-  }
-  
-  if (operatorId) {
-    coupons = coupons.filter(coupon => coupon.operatorId === operatorId);
-  }
-  
-  return coupons;
-};
+import { fetchSalesCoupons, fetchTerminals, fetchOperators } from '@/api/salesCouponsApi';
+import { toast } from 'sonner';
 
 const SalesCoupons: React.FC = () => {
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
@@ -69,13 +23,39 @@ const SalesCoupons: React.FC = () => {
   const [selectedOperator, setSelectedOperator] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Fetch terminal IDs
+  const { data: terminalIds = [] } = useQuery({
+    queryKey: ['terminals'],
+    queryFn: () => fetchTerminals(),
+    onError: (error) => {
+      toast.error('Failed to load terminals');
+      console.error('Error fetching terminals:', error);
+    }
+  });
+
+  // Fetch operators
+  const { data: operators = [] } = useQuery({
+    queryKey: ['operators'],
+    queryFn: () => fetchOperators(),
+    onError: (error) => {
+      toast.error('Failed to load operators');
+      console.error('Error fetching operators:', error);
+    }
+  });
+
+  // Fetch sales coupons with filters
   const { data: coupons, isLoading } = useQuery({
     queryKey: ['salesCoupons', dateRange, selectedTerminal, selectedOperator],
     queryFn: () => fetchSalesCoupons({ 
-      dateRange, 
-      terminalId: selectedTerminal,
-      operatorId: selectedOperator
+      dateFrom: dateRange?.from ? formatISO(dateRange.from, { representation: 'date' }) : undefined,
+      dateTo: dateRange?.to ? formatISO(dateRange.to, { representation: 'date' }) : undefined,
+      terminalId: selectedTerminal || undefined,
+      operatorId: selectedOperator || undefined
     }),
+    onError: (error) => {
+      toast.error('Failed to load sales coupons');
+      console.error('Error fetching sales coupons:', error);
+    }
   });
 
   const filteredCoupons = useMemo(() => {
@@ -93,24 +73,6 @@ const SalesCoupons: React.FC = () => {
     setSelectedOperator(null);
     setSearchTerm('');
   };
-
-  // Create unique list of operators from coupons
-  const operators = useMemo(() => {
-    if (!coupons) return [];
-    
-    const uniqueOperators = new Set<string>();
-    coupons.forEach(coupon => {
-      uniqueOperators.add(coupon.operatorId);
-    });
-    
-    return Array.from(uniqueOperators).map(opId => {
-      const coupon = coupons.find(c => c.operatorId === opId);
-      return {
-        id: opId,
-        name: coupon ? coupon.operatorName : opId
-      };
-    });
-  }, [coupons]);
 
   return (
     <DashboardLayout>
@@ -153,7 +115,10 @@ const SalesCoupons: React.FC = () => {
               
               <div className="space-y-2">
                 <Label>Terminal</Label>
-                <Select value={selectedTerminal || undefined} onValueChange={value => setSelectedTerminal(value || null)}>
+                <Select 
+                  value={selectedTerminal || "all-terminals"} 
+                  onValueChange={(value) => setSelectedTerminal(value === "all-terminals" ? null : value)}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="All Terminals" />
                   </SelectTrigger>
@@ -173,7 +138,10 @@ const SalesCoupons: React.FC = () => {
               
               <div className="space-y-2">
                 <Label>Operator</Label>
-                <Select value={selectedOperator || undefined} onValueChange={value => setSelectedOperator(value || null)}>
+                <Select 
+                  value={selectedOperator || "all-operators"} 
+                  onValueChange={(value) => setSelectedOperator(value === "all-operators" ? null : value)}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="All Operators" />
                   </SelectTrigger>

@@ -1,10 +1,9 @@
-
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DateRangePicker } from '@/components/Dashboard/DateRangePicker';
 import { DateRange } from 'react-day-picker';
-import { addDays, format, subDays } from 'date-fns';
+import { format, formatISO, subDays } from 'date-fns';
 import CreditCardCouponsTable from '@/components/CreditCard/CreditCardCouponsTable';
 import PaymentCalendarTable from '@/components/CreditCard/PaymentCalendarTable';
 import { CreditCardCoupon, LiquidationSummary } from '@/types/transactions';
@@ -15,78 +14,8 @@ import { CreditCard, Filter, Search } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-
-// Mock liquidation IDs
-const liquidationIds = ['LIQ-2023-001', 'LIQ-2023-002', 'LIQ-2023-003', 'LIQ-2023-004'];
-
-// Mock data function - in a real app, this would fetch from an API
-const fetchCreditCardCoupons = async ({ 
-  dateRange, 
-  cardBrand, 
-  creditType, 
-  liquidationId 
-}: { 
-  dateRange: DateRange | undefined, 
-  cardBrand: string | null,
-  creditType: string | null,
-  liquidationId: string | null
-}): Promise<CreditCardCoupon[]> => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  const startDate = dateRange?.from ? new Date(dateRange.from) : subDays(new Date(), 30);
-  const endDate = dateRange?.to ? new Date(dateRange.to) : new Date();
-  
-  // Card brands for random assignment
-  const cardBrands = ['OCA', 'Visa', 'MasterCard'] as const;
-  const creditTypes = ['Credit', 'Debit'] as const;
-  
-  // Generate mock data
-  let coupons = Array.from({ length: 25 }, (_, i) => {
-    const randomCardBrand = cardBrands[Math.floor(Math.random() * cardBrands.length)];
-    const randomCreditType = creditTypes[Math.floor(Math.random() * creditTypes.length)];
-    const randomLiquidationId = liquidationIds[Math.floor(Math.random() * liquidationIds.length)];
-    
-    return {
-      id: `cc-${i + 1}`,
-      couponId: `CP${100000 + i}`,
-      amount: Math.round(Math.random() * 10000) / 100,
-      quotas: Math.floor(Math.random() * 12) + 1,
-      taxes: Math.round(Math.random() * 500) / 100,
-      commissions: Math.round(Math.random() * 300) / 100,
-      authorizationId: `AUTH${200000 + i}`,
-      cardBrand: randomCardBrand,
-      creditType: randomCreditType,
-      sellDate: format(
-        subDays(new Date(), Math.floor(Math.random() * 30)),
-        'yyyy-MM-dd'
-      ),
-      expectedPaymentDate: format(
-        addDays(new Date(), Math.floor(Math.random() * 30)),
-        'yyyy-MM-dd'
-      ),
-      sellerId: `S${1000 + i % 5}`,
-      sellerName: `Seller ${i % 5 + 1}`,
-      liquidationId: randomLiquidationId
-    };
-  });
-  
-  // Apply filters
-  if (cardBrand) {
-    coupons = coupons.filter(coupon => coupon.cardBrand === cardBrand);
-  }
-  
-  if (creditType) {
-    coupons = coupons.filter(coupon => coupon.creditType === creditType);
-  }
-  
-  if (liquidationId) {
-    coupons = coupons.filter(coupon => coupon.liquidationId === liquidationId);
-  }
-  
-  return coupons;
-};
+import { fetchCreditCardCoupons, fetchLiquidationIds } from '@/api/creditCardCouponsApi';
+import { toast } from 'sonner';
 
 // Function to calculate liquidation summaries
 const calculateLiquidationSummaries = (coupons: CreditCardCoupon[]): LiquidationSummary[] => {
@@ -121,14 +50,30 @@ const CreditCardCoupons: React.FC = () => {
   const [selectedLiquidationId, setSelectedLiquidationId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Fetch liquidation IDs
+  const { data: liquidationIds = [] } = useQuery({
+    queryKey: ['liquidationIds'],
+    queryFn: () => fetchLiquidationIds(),
+    onError: (error) => {
+      toast.error('Failed to load liquidation IDs');
+      console.error('Error fetching liquidation IDs:', error);
+    }
+  });
+
+  // Fetch credit card coupons with filters
   const { data: coupons, isLoading } = useQuery({
     queryKey: ['creditCardCoupons', dateRange, selectedCardBrand, selectedCreditType, selectedLiquidationId],
     queryFn: () => fetchCreditCardCoupons({ 
-      dateRange, 
-      cardBrand: selectedCardBrand, 
-      creditType: selectedCreditType,
-      liquidationId: selectedLiquidationId
+      dateFrom: dateRange?.from ? formatISO(dateRange.from, { representation: 'date' }) : undefined,
+      dateTo: dateRange?.to ? formatISO(dateRange.to, { representation: 'date' }) : undefined,
+      cardBrand: selectedCardBrand || undefined,
+      creditType: selectedCreditType || undefined,
+      liquidationId: selectedLiquidationId || undefined
     }),
+    onError: (error) => {
+      toast.error('Failed to load credit card coupons');
+      console.error('Error fetching credit card coupons:', error);
+    }
   });
 
   const filteredCoupons = useMemo(() => {

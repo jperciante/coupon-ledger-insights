@@ -1,37 +1,14 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import DashboardLayout from '@/components/Dashboard/DashboardLayout';
 import { DateRangePicker } from '@/components/Dashboard/DateRangePicker';
 import ReconciliationSummary from '@/components/Dashboard/ReconciliationSummary';
 import TransactionTable from '@/components/Dashboard/TransactionTable';
 import { DateRange } from 'react-day-picker';
-import { addDays, subDays } from 'date-fns';
+import { formatISO, subDays } from 'date-fns';
 import { toast } from 'sonner';
-import { TransactionData } from '@/types/transactions';
-
-// Mock transaction data - in a real app this would come from an API
-const generateMockTransactions = (count: number): TransactionData[] => {
-  const creditTypes = ['Visa', 'Mastercard', 'American Express', 'Other'];
-  const today = new Date();
-  
-  return Array.from({ length: count }, (_, i) => {
-    const salesDate = subDays(today, Math.floor(Math.random() * 60));
-    const paymentDate = Math.random() > 0.2 
-      ? addDays(salesDate, Math.floor(Math.random() * 14) + 1) 
-      : null;
-    
-    return {
-      id: `tr-${i + 1}`,
-      couponId: `CPN-${10000 + i}`,
-      amount: +(Math.random() * 1000 + 50).toFixed(2),
-      quotas: Math.floor(Math.random() * 12) + 1,
-      authorizationId: `AUTH-${Math.floor(Math.random() * 1000000)}`,
-      creditType: creditTypes[Math.floor(Math.random() * creditTypes.length)],
-      salesDate: salesDate.toISOString(),
-      paymentDate: paymentDate?.toISOString() || null,
-    };
-  });
-};
+import { fetchTransactions, fetchReconciliationSummary } from '@/api/transactionsApi';
 
 const Dashboard = () => {
   // Set default date range to the last 30 days
@@ -40,40 +17,33 @@ const Dashboard = () => {
     to: new Date(),
   });
   
-  const [transactions, setTransactions] = useState<TransactionData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  // Fetch transactions with date range filter
+  const { data: transactions = [], isLoading: isLoadingTransactions } = useQuery({
+    queryKey: ['transactions', dateRange],
+    queryFn: () => fetchTransactions({
+      dateFrom: dateRange?.from ? formatISO(dateRange.from, { representation: 'date' }) : undefined,
+      dateTo: dateRange?.to ? formatISO(dateRange.to, { representation: 'date' }) : undefined,
+    }),
+    onError: (error) => {
+      toast.error('Failed to load transaction data');
+      console.error('Error fetching transactions:', error);
+    }
+  });
 
-  // Fetch transactions when date range changes
-  useEffect(() => {
-    const fetchTransactions = async () => {
-      setIsLoading(true);
-      
-      try {
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Generate mock data
-        const mockData = generateMockTransactions(20);
-        
-        // Filter by date range if it exists
-        const filteredData = dateRange?.from && dateRange.to
-          ? mockData.filter(tx => {
-              const txDate = new Date(tx.salesDate);
-              return txDate >= dateRange.from! && txDate <= dateRange.to!;
-            })
-          : mockData;
-        
-        setTransactions(filteredData);
-      } catch (error) {
-        console.error('Failed to fetch transactions:', error);
-        toast.error('Failed to load transaction data');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    fetchTransactions();
-  }, [dateRange]);
+  // Fetch reconciliation summary data
+  const { data: summaryData, isLoading: isLoadingSummary } = useQuery({
+    queryKey: ['reconciliationSummary', dateRange],
+    queryFn: () => fetchReconciliationSummary({
+      dateFrom: dateRange?.from ? formatISO(dateRange.from, { representation: 'date' }) : undefined,
+      dateTo: dateRange?.to ? formatISO(dateRange.to, { representation: 'date' }) : undefined,
+    }),
+    onError: (error) => {
+      toast.error('Failed to load reconciliation summary');
+      console.error('Error fetching reconciliation summary:', error);
+    }
+  });
+  
+  const isLoading = isLoadingTransactions || isLoadingSummary;
 
   return (
     <DashboardLayout>
@@ -94,7 +64,10 @@ const Dashboard = () => {
           </div>
         ) : (
           <>
-            <ReconciliationSummary transactions={transactions} />
+            <ReconciliationSummary 
+              transactions={transactions} 
+              summaryData={summaryData} 
+            />
             <TransactionTable transactions={transactions} />
           </>
         )}
