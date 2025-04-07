@@ -9,6 +9,7 @@ export const ENDPOINTS = {
   // Credit card coupons
   CREDIT_CARD_COUPONS: '/credit-card-coupons',
   // Reconciliation data
+  RECONCILIATION: '/reconciliation',
   TRANSACTIONS: '/transactions',
   // Authentication
   LOGIN: '/auth/login',

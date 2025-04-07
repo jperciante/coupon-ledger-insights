@@ -17,24 +17,24 @@ const Dashboard = () => {
     to: new Date(),
   });
   
-  // Fetch transactions with date range filter
+  // Fetch reconciled transactions between sales coupons and credit card coupons
   const { data: transactions = [], isLoading: isLoadingTransactions } = useQuery({
-    queryKey: ['transactions', dateRange],
+    queryKey: ['reconciliation-transactions', dateRange],
     queryFn: () => fetchTransactions({
       dateFrom: dateRange?.from ? formatISO(dateRange.from, { representation: 'date' }) : undefined,
       dateTo: dateRange?.to ? formatISO(dateRange.to, { representation: 'date' }) : undefined,
     }),
     meta: {
       onError: (error: Error) => {
-        toast.error('Failed to load transaction data');
-        console.error('Error fetching transactions:', error);
+        toast.error('Failed to load reconciliation data');
+        console.error('Error fetching reconciliation transactions:', error);
       }
     }
   });
 
-  // Fetch reconciliation summary data
+  // Fetch reconciliation summary showing matches, mismatches, and pending items
   const { data: summaryData, isLoading: isLoadingSummary } = useQuery({
-    queryKey: ['reconciliationSummary', dateRange],
+    queryKey: ['reconciliation-summary', dateRange],
     queryFn: () => fetchReconciliationSummary({
       dateFrom: dateRange?.from ? formatISO(dateRange.from, { representation: 'date' }) : undefined,
       dateTo: dateRange?.to ? formatISO(dateRange.to, { representation: 'date' }) : undefined,
@@ -53,7 +53,7 @@ const Dashboard = () => {
     <DashboardLayout>
       <div className="container mx-auto px-4 py-6 space-y-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <h2 className="text-2xl font-bold">Reconciliation Dashboard</h2>
+          <h2 className="text-2xl font-bold">Sales & Credit Card Reconciliation</h2>
           <div className="w-full sm:w-auto sm:min-w-[300px]">
             <DateRangePicker 
               dateRange={dateRange} 
@@ -64,7 +64,7 @@ const Dashboard = () => {
         
         {isLoading ? (
           <div className="flex justify-center items-center min-h-[400px]">
-            <p className="text-muted-foreground">Loading transaction data...</p>
+            <p className="text-muted-foreground">Loading reconciliation data...</p>
           </div>
         ) : (
           <>
