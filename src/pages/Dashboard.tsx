@@ -24,9 +24,11 @@ const Dashboard = () => {
       dateFrom: dateRange?.from ? formatISO(dateRange.from, { representation: 'date' }) : undefined,
       dateTo: dateRange?.to ? formatISO(dateRange.to, { representation: 'date' }) : undefined,
     }),
-    onError: (error) => {
-      toast.error('Failed to load transaction data');
-      console.error('Error fetching transactions:', error);
+    meta: {
+      onError: (error: Error) => {
+        toast.error('Failed to load transaction data');
+        console.error('Error fetching transactions:', error);
+      }
     }
   });
 
@@ -37,9 +39,11 @@ const Dashboard = () => {
       dateFrom: dateRange?.from ? formatISO(dateRange.from, { representation: 'date' }) : undefined,
       dateTo: dateRange?.to ? formatISO(dateRange.to, { representation: 'date' }) : undefined,
     }),
-    onError: (error) => {
-      toast.error('Failed to load reconciliation summary');
-      console.error('Error fetching reconciliation summary:', error);
+    meta: {
+      onError: (error: Error) => {
+        toast.error('Failed to load reconciliation summary');
+        console.error('Error fetching reconciliation summary:', error);
+      }
     }
   });
   

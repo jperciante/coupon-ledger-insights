@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,9 +26,11 @@ const SalesCoupons: React.FC = () => {
   const { data: terminalIds = [] } = useQuery({
     queryKey: ['terminals'],
     queryFn: () => fetchTerminals(),
-    onError: (error) => {
-      toast.error('Failed to load terminals');
-      console.error('Error fetching terminals:', error);
+    meta: {
+      onError: (error: Error) => {
+        toast.error('Failed to load terminals');
+        console.error('Error fetching terminals:', error);
+      }
     }
   });
 
@@ -37,9 +38,11 @@ const SalesCoupons: React.FC = () => {
   const { data: operators = [] } = useQuery({
     queryKey: ['operators'],
     queryFn: () => fetchOperators(),
-    onError: (error) => {
-      toast.error('Failed to load operators');
-      console.error('Error fetching operators:', error);
+    meta: {
+      onError: (error: Error) => {
+        toast.error('Failed to load operators');
+        console.error('Error fetching operators:', error);
+      }
     }
   });
 
@@ -52,9 +55,11 @@ const SalesCoupons: React.FC = () => {
       terminalId: selectedTerminal || undefined,
       operatorId: selectedOperator || undefined
     }),
-    onError: (error) => {
-      toast.error('Failed to load sales coupons');
-      console.error('Error fetching sales coupons:', error);
+    meta: {
+      onError: (error: Error) => {
+        toast.error('Failed to load sales coupons');
+        console.error('Error fetching sales coupons:', error);
+      }
     }
   });
 

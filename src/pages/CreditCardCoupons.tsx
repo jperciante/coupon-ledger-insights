@@ -54,9 +54,11 @@ const CreditCardCoupons: React.FC = () => {
   const { data: liquidationIds = [] } = useQuery({
     queryKey: ['liquidationIds'],
     queryFn: () => fetchLiquidationIds(),
-    onError: (error) => {
-      toast.error('Failed to load liquidation IDs');
-      console.error('Error fetching liquidation IDs:', error);
+    meta: {
+      onError: (error: Error) => {
+        toast.error('Failed to load liquidation IDs');
+        console.error('Error fetching liquidation IDs:', error);
+      }
     }
   });
 
@@ -70,9 +72,11 @@ const CreditCardCoupons: React.FC = () => {
       creditType: selectedCreditType || undefined,
       liquidationId: selectedLiquidationId || undefined
     }),
-    onError: (error) => {
-      toast.error('Failed to load credit card coupons');
-      console.error('Error fetching credit card coupons:', error);
+    meta: {
+      onError: (error: Error) => {
+        toast.error('Failed to load credit card coupons');
+        console.error('Error fetching credit card coupons:', error);
+      }
     }
   });
 
